@@ -4,47 +4,63 @@
 **Database:** SQLite 3  
 **LLM Providers:** Groq, Google Gemini, Ollama
 
+---
+
 ## Project Overview
 
-This project is an automated Text-to-SQL Analytics Engine that converts natural language questions into executable SQLite SQL queries.
+This project is an automated **Text-to-SQL Analytics Engine** that converts natural language questions into executable SQLite SQL queries.
 
 It supports queries related to sales, regions, products, targets, revenue, and business analytics.
 
 The system also validates generated SQL and automatically corrects SQL when execution errors occur.
 
+---
+
 ## Architecture
 
-Natural Language Query  
-↓  
-LLM Client (Groq / Gemini / Ollama)  
-↓  
-JSON Response Parsing  
-↓  
-Generated SQLite SQL  
-↓  
-SQLite Execution  
-↓  
-Error → LLM Self-Correction  
-↓  
-Final Result  
-↓  
+```
+Natural Language Query
+        |
+        v
+LLM Client
+(Groq / Gemini / Ollama)
+        |
+        v
+JSON Response Parsing
+        |
+        v
+Generated SQLite SQL
+        |
+        v
+SQLite Execution
+        |
+        +---- Error ----> LLM Self-Correction
+        |
+        v
+Final Result
+        |
+        v
 output_results.json
+```
+
+---
 
 ## Key Features
 
-- Multi-LLM support using Groq, Gemini, and Ollama
-- SQLite 3 compatible SQL generation
-- Revenue calculation using `quantity * unit_price * (1.0 - discount)`
-- SQLite date handling using `strftime()`
-- Window functions such as `RANK()`, `LAG()`, and `SUM() OVER()`
-- Automatic SQL error correction
-- Structured JSON output
-- Dynamic Groq model selection
-- Exponential backoff for Gemini rate limits
+- **Multi-LLM Support:** Groq, Gemini, and local Ollama
+- **SQLite 3 Compatible:** Generates SQLite-specific SQL
+- **Revenue Calculation:** `quantity * unit_price * (1.0 - discount)`
+- **Date Handling:** Uses SQLite `strftime()`
+- **Window Functions:** Supports `RANK()`, `LAG()`, and `SUM() OVER()`
+- **Self-Correction:** Sends SQL errors back to the LLM for correction
+- **Structured Output:** Saves results to `output_results.json`
+- **Dynamic Model Selection:** Automatically detects available Groq models
+
+---
 
 ## Project Structure
 
-```text
+```
 GenAI_analytics_engine/
 ├── engine/
 │   ├── __init__.py
@@ -59,60 +75,88 @@ GenAI_analytics_engine/
 ├── requirements.txt
 ├── output_results.json
 └── README.md
+```
+
+---
 
 ## Setup
 
 ### 1. Create Virtual Environment
 
-    python -m venv venv
+```bash
+python -m venv venv
+```
 
-Windows PowerShell:
+**Windows PowerShell:**
 
-    .\venv\Scripts\Activate.ps1
+```powershell
+.\venv\Scripts\Activate.ps1
+```
 
-Linux/macOS:
+**Linux/macOS:**
 
-    source venv/bin/activate
+```bash
+source venv/bin/activate
+```
 
 ### 2. Install Dependencies
 
-    pip install -r requirements.txt
+```bash
+pip install -r requirements.txt
+```
 
 ### 3. Configure API Key
 
-For Groq:
+**Groq:**
 
-    $env:GROQ_API_KEY="your_groq_api_key"
+```powershell
+$env:GROQ_API_KEY="your_groq_api_key"
+```
 
-For Gemini:
+**Gemini:**
 
-    $env:GEMINI_API_KEY="your_gemini_api_key"
+```powershell
+$env:GEMINI_API_KEY="your_gemini_api_key"
+```
 
 ### 4. Run
 
-    python main.py
+```bash
+python main.py
+```
+
+---
 
 ## Example
 
-Input:
+### Input
 
-    Total sales in India for March
+```text
+Total sales in India for March
+```
 
-Generated SQL:
+### Generated SQL
 
-    SELECT SUM(quantity * unit_price * (1.0 - discount)) AS total_sales
-    FROM sales
-    WHERE country = 'India'
-      AND strftime('%m', order_date) = '03';
+```sql
+SELECT
+    SUM(quantity * unit_price * (1.0 - discount)) AS total_sales
+FROM sales
+WHERE country = 'India'
+  AND strftime('%m', order_date) = '03';
+```
 
-Output:
+### Output
 
-    {
-      "nl_query": "Total sales in India for March",
-      "generated_logic": "SELECT SUM(quantity * unit_price * (1.0 - discount)) AS total_sales FROM sales WHERE country = 'India' AND strftime('%m', order_date) = '03';",
-      "confidence": 0.97,
-      "explanation": "Calculates total revenue for orders in India during March."
-    }
+```json
+{
+  "nl_query": "Total sales in India for March",
+  "generated_logic": "SELECT SUM(quantity * unit_price * (1.0 - discount)) AS total_sales FROM sales WHERE country = 'India' AND strftime('%m', order_date) = '03';",
+  "confidence": 0.97,
+  "explanation": "Calculates total revenue for orders in India during March."
+}
+```
+
+---
 
 ## Edge Cases Handled
 
@@ -123,6 +167,8 @@ Output:
 - SQLite-specific date handling
 - SQL self-correction using database error feedback
 
+---
+
 ## Technologies
 
-Python • SQLite 3 • Groq • Google Gemini • Ollama • SQL • LLMs • JSON
+**Python** • **SQLite 3** • **Groq** • **Google Gemini** • **Ollama** • **SQL** • **LLMs** • **JSON**
