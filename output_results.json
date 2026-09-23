@@ -1,0 +1,180 @@
+[
+  {
+    "query": "Total sales in India for March",
+    "generated_logic": "SELECT SUM(quantity * unit_price * (1.0 - discount)) AS total_sales FROM sales WHERE country = 'India' AND strftime('%m', order_date) = '03';",
+    "result": [
+      {
+        "total_sales": 108.0
+      }
+    ],
+    "confidence_score": 0.97,
+    "explanation": "The query sums the derived revenue (quantity * unit_price * (1-discount)) for all rows where the country is India and the order month is March (month = '03')."
+  },
+  {
+    "query": "Top 2 cities by profit",
+    "generated_logic": "SELECT city, SUM(profit) AS total_profit FROM sales GROUP BY city ORDER BY total_profit DESC LIMIT 2;",
+    "result": [
+      {
+        "city": "New York",
+        "total_profit": 200
+      },
+      {
+        "city": "San Francisco",
+        "total_profit": 180
+      }
+    ],
+    "confidence_score": 0.99,
+    "explanation": "Aggregates profit per city, orders descending to get highest profit, and returns the top two cities."
+  },
+  {
+    "query": "Average order value by region",
+    "generated_logic": "SELECT region,\n       SUM(quantity * unit_price * (1.0 - discount)) / COUNT(order_id) AS avg_order_value\nFROM sales\nGROUP BY region\nORDER BY avg_order_value DESC;",
+    "result": [
+      {
+        "region": NaN,
+        "avg_order_value": 1087.4666666666667
+      },
+      {
+        "region": "EMEA",
+        "avg_order_value": 799.3333333333334
+      },
+      {
+        "region": "APAC",
+        "avg_order_value": 118.5
+      }
+    ],
+    "confidence_score": 0.99,
+    "explanation": "The query aggregates sales by the 'region' dimension. Revenue is calculated per the data dictionary as quantity * unit_price * (1 - discount). The total revenue per region is summed, then divided by the count of distinct order_id values to obtain the average order value (AOV) for each region. Results are ordered descending by AOV for easy ranking."
+  },
+  {
+    "query": "Which region missed its target in Feb?",
+    "generated_logic": "SELECT s.region,\n       SUM(s.quantity * s.unit_price * (1.0 - s.discount)) AS actual_revenue,\n       t.target_revenue\nFROM sales s\nJOIN targets t\n  ON s.region = t.region\n AND s.month = t.month\nWHERE s.month = '2024-02'\nGROUP BY s.region, t.target_revenue\nHAVING actual_revenue < t.target_revenue;",
+    "result": [
+      {
+        "region": "APAC",
+        "actual_revenue": 75.0,
+        "target_revenue": 6000
+      },
+      {
+        "region": "EMEA",
+        "actual_revenue": 255.0,
+        "target_revenue": 7500
+      }
+    ],
+    "confidence_score": 0.97,
+    "explanation": "The query aggregates sales revenue per region for February (using the pre\u2011calculated month column '2024-02'), joins to the targets table on region and month, and returns only those regions where the summed actual revenue is lower than the target revenue."
+  },
+  {
+    "query": "Sales contribution % by category",
+    "generated_logic": "SELECT product_category,\n       SUM(quantity * unit_price * (1.0 - discount)) AS revenue,\n       ROUND(100.0 * SUM(quantity * unit_price * (1.0 - discount)) / SUM(SUM(quantity * unit_price * (1.0 - discount))) OVER (), 2) AS contribution_pct\nFROM sales\nGROUP BY product_category\nORDER BY contribution_pct DESC;",
+    "result": [
+      {
+        "product_category": "Technology",
+        "revenue": 5402.0,
+        "contribution_pct": 88.06
+      },
+      {
+        "product_category": "Furniture",
+        "revenue": 579.0,
+        "contribution_pct": 9.44
+      },
+      {
+        "product_category": "Office Supplies",
+        "revenue": 153.4,
+        "contribution_pct": 2.5
+      }
+    ],
+    "confidence_score": 0.97,
+    "explanation": "The query aggregates the derived revenue (quantity\u202f*\u202funit_price\u202f*\u202f(1\u2011discount)) for each product_category. It then uses a window SUM to get the total revenue across all categories and calculates each category's share as a percentage, rounded to two decimals. Results are ordered by highest contribution first."
+  },
+  {
+    "query": "Top product in each region",
+    "generated_logic": "SELECT region, product_name, revenue FROM (SELECT region, product_name, SUM(quantity * unit_price * (1.0 - discount)) AS revenue, ROW_NUMBER() OVER (PARTITION BY region ORDER BY SUM(quantity * unit_price * (1.0 - discount)) DESC) AS rn FROM sales GROUP BY region, product_name) WHERE rn = 1;",
+    "result": [
+      {
+        "region": NaN,
+        "product_name": "Dell XPS",
+        "revenue": 2068.0
+      },
+      {
+        "region": "APAC",
+        "product_name": "Ergo Chair",
+        "revenue": 324.0
+      },
+      {
+        "region": "EMEA",
+        "product_name": "Samsung Galaxy",
+        "revenue": 1288.0
+      }
+    ],
+    "confidence_score": 0.96,
+    "explanation": "The query aggregates revenue (quantity * unit_price * (1\u2011discount)) for each product_name within each region, ranks products per region by total revenue using ROW_NUMBER, and returns only the top\u2011ranked product per region."
+  },
+  {
+    "query": "YoY growth in revenue",
+    "generated_logic": "SELECT year, revenue, prev_revenue, CASE WHEN prev_revenue IS NOT NULL THEN (revenue - prev_revenue) * 100.0 / prev_revenue END AS yoy_growth_percent FROM (SELECT year, SUM(quantity * unit_price * (1.0 - discount)) AS revenue FROM sales GROUP BY year) AS t LEFT JOIN (SELECT year AS yr, SUM(quantity * unit_price * (1.0 - discount)) AS prev_revenue FROM sales GROUP BY year) AS p ON p.yr = t.year - 1 ORDER BY year;",
+    "result": [
+      {
+        "year": "2024",
+        "revenue": 6134.4,
+        "prev_revenue": null,
+        "yoy_growth_percent": null
+      }
+    ],
+    "confidence_score": 0.97,
+    "explanation": "The inner query aggregates total revenue per year using the defined revenue formula (quantity * unit_price * (1 - discount)). It then joins each year with the previous calendar year (year - 1) to obtain the prior year's revenue. The outer SELECT computes the year\u2011over\u2011year growth percentage as (current - previous) / previous * 100. The result lists each year, its revenue, the prior year's revenue, and the YoY growth percent."
+  },
+  {
+    "query": "Revenue of top 3 customers per region",
+    "generated_logic": "SELECT region, customer_id, revenue FROM (SELECT region, customer_id, SUM(quantity * unit_price * (1.0 - discount)) AS revenue, RANK() OVER (PARTITION BY region ORDER BY SUM(quantity * unit_price * (1.0 - discount)) DESC) AS rnk FROM sales GROUP BY region, customer_id) sub WHERE rnk <= 3 ORDER BY region, rnk;",
+    "result": [
+      {
+        "region": NaN,
+        "customer_id": "C009",
+        "revenue": 2068.0
+      },
+      {
+        "region": NaN,
+        "customer_id": "C004",
+        "revenue": 1116.0
+      },
+      {
+        "region": NaN,
+        "customer_id": "C007",
+        "revenue": 78.4
+      },
+      {
+        "region": "APAC",
+        "customer_id": "C001",
+        "revenue": 324.0
+      },
+      {
+        "region": "APAC",
+        "customer_id": "C006",
+        "revenue": 75.0
+      },
+      {
+        "region": "APAC",
+        "customer_id": "C003",
+        "revenue": 75.0
+      },
+      {
+        "region": "EMEA",
+        "customer_id": "C008",
+        "revenue": 1288.0
+      },
+      {
+        "region": "EMEA",
+        "customer_id": "C002",
+        "revenue": 855.0
+      },
+      {
+        "region": "EMEA",
+        "customer_id": "C005",
+        "revenue": 255.0
+      }
+    ],
+    "confidence_score": 0.97,
+    "explanation": "The query first aggregates revenue per customer within each region using the defined revenue formula (quantity * unit_price * (1 - discount)). It then ranks customers inside each region by their total revenue in descending order with the window function RANK(). An outer query filters to keep only the top three ranked customers per region and returns the region, customer_id, and their revenue, ordered by region and rank."
+  }
+]

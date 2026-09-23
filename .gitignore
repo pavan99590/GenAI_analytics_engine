@@ -1,0 +1,16 @@
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Python Cache & Build
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Sensitive Files & Local DBs
+.env
+*.db
+
+# Output Results 
+# output_results.json
