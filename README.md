@@ -44,14 +44,17 @@ output_results.json
 
 ## Project Structure
 
+```text
 GenAI_analytics_engine/
 ├── engine/
 │   ├── __init__.py
 │   ├── llm_client.py
 │   ├── query_engine.py
 │   └── schema.py
+│
 ├── data/
 │   └── sales.db
+│
 ├── main.py
 ├── requirements.txt
 ├── output_results.json
